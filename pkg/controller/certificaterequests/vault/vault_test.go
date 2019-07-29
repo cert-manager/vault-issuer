@@ -24,11 +24,12 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"strings"
 	"testing"
 
+	vault "github.com/hashicorp/vault/api"
 	corev1 "k8s.io/api/core/v1"
 
-	vault "github.com/hashicorp/vault/api"
 	"github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1"
 	testfake "github.com/jetstack/cert-manager/pkg/controller/test/fake"
 	"github.com/jetstack/cert-manager/test/unit/gen"
@@ -259,7 +260,6 @@ type testConfigureCertPoolT struct {
 }
 
 func TestConfigureCertPool(t *testing.T) {
-
 	tests := map[string]testConfigureCertPoolT{
 		"no CA bundle set in issuer should return nil": {
 			issuer: gen.Issuer("vault-issuer",
@@ -407,7 +407,7 @@ func TestRequestTokenWithAppRoleRef(t *testing.T) {
 			LocalObjectReference: v1alpha1.LocalObjectReference{
 				Name: "test-secret",
 			},
-			Key: "test-key",
+			Key: "my-key",
 		},
 	}
 
@@ -425,14 +425,61 @@ func TestRequestTokenWithAppRoleRef(t *testing.T) {
 			expectedToken: "",
 			expectedErr:   errors.New("error reading Vault AppRole from secret: test-namespace/test-secret: secret not found"),
 		},
+		"foo": {
+			//client: &vault.NewClient(&vault.Config{
+			//	HttpClient: http.DefaultClient,
+			//}),
+			client:  nil,
+			appRole: basicAppRoleRef,
+			certificaterequest: gen.CertificateRequest("test",
+				gen.SetCertificateRequestNamespace("test-namespace"),
+			),
+			fakeLister: gen.FakeSecretListerFrom(testfake.NewFakeSecretLister(),
+				gen.SetFakeSecretNamespaceListerGet(
+					&corev1.Secret{
+						Data: map[string][]byte{
+							"my-key": []byte("my-key-data"),
+						},
+					}, nil),
+			),
+
+			expectedToken: "",
+			expectedErr:   errors.New("error reading Vault AppRole from secret: test-namespace/test-secret: secret not found"),
+		},
 	}
+
+	f := func(w http.ResponseWriter, r *http.Request) {
+		message := r.URL.Path
+		message = strings.TrimPrefix(message, "/")
+		message = "Hello " + message
+		w.Write([]byte(message))
+	}
+
+	http.HandleFunc("/", f)
+	go func() {
+		if err := http.ListenAndServeTLS("127.0.0.1:8443")
+		if err := http.ListenAndServe("127.0.0.1:8443", nil); err != nil {
+			t.Error(err)
+			t.FailNow()
+		}
+	}()
 
 	for name, test := range tests {
 		v := &Vault{
 			secretsLister: test.fakeLister,
 		}
 
-		token, err := v.requestTokenWithAppRoleRef(test.certificaterequest, test.client, test.appRole)
+		client, err := vault.NewClient(&vault.Config{
+			HttpClient: http.DefaultClient,
+			Address:    "https://127.0.0.1:8443",
+		})
+
+		if err != nil {
+			t.Errorf("%s: failed to build vault client: %s", name, err)
+			continue
+		}
+
+		token, err := v.requestTokenWithAppRoleRef(test.certificaterequest, client, test.appRole)
 		if !reflect.DeepEqual(test.expectedErr, err) {
 			t.Errorf("%s: unexpected error, exp=%v got=%v",
 				name, test.expectedErr, err)

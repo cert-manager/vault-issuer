@@ -3,19 +3,14 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = [
-        "setup.go",
+        "client.go",
         "vault.go",
     ],
-    importpath = "github.com/jetstack/cert-manager/pkg/issuer/vault",
-    visibility = ["//visibility:public"],
+    importpath = "github.com/jetstack/cert-manager/internal/vault/fake",
+    visibility = ["//:__subpackages__"],
     deps = [
-        "//internal/vault:go_default_library",
-        "//pkg/api/util:go_default_library",
         "//pkg/apis/certmanager/v1:go_default_library",
-        "//pkg/apis/meta/v1:go_default_library",
-        "//pkg/controller:go_default_library",
-        "//pkg/issuer:go_default_library",
-        "//pkg/logs:go_default_library",
+        "@com_github_hashicorp_vault_api//:go_default_library",
         "@io_k8s_client_go//listers/core/v1:go_default_library",
     ],
 )

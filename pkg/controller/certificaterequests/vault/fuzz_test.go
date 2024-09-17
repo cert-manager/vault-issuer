@@ -53,12 +53,12 @@ func init() {
 }
 
 /*
-	FuzzVaultSync is a fuzz test that can be run by way of
+	FuzzVaultCRController is a fuzz test that can be run by way of
 
-go test -fuzz=FuzzVaultSync. It tests for panics, OOMs
+go test -fuzz=FuzzVaultCRController. It tests for panics, OOMs
 and stackoverflow-related bugs in the Vault reconciliation.
 */
-func FuzzVaultSync(f *testing.F) {
+func FuzzVaultCRController(f *testing.F) {
 	f.Fuzz(func(t *testing.T,
 		secretTokenData,
 		customCsrPEM,

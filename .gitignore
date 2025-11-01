@@ -1,0 +1,16 @@
+.DS_Store
+.idea
+*.iml
+.vscode
+.venv
+/.settings/
+/.project
+_artifacts/
+/vendor/
+bin/
+_bin/
+.bin/
+*.bak
+/go.work.sum
+**/go.work
+*.test

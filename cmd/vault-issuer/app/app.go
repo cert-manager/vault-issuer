@@ -28,6 +28,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	"github.com/cert-manager/vault-issuer/cmd/vault-issuer/app/options"
 	"github.com/cert-manager/vault-issuer/internal/controller"
@@ -76,9 +77,9 @@ func NewCommand() *cobra.Command {
 				// 	CertDir: opts.Webhook.CertDir,
 				// 	TLSOpts: tlsOptions,
 				// }),
-				// Metrics: server.Options{
-				// 	BindAddress: fmt.Sprintf("0.0.0.0:%d", opts.MetricsPort),
-				// },
+				Metrics: server.Options{
+					BindAddress: fmt.Sprintf("0.0.0.0:%d", opts.MetricsPort),
+				},
 				// Cache: bundle.CacheOpts(opts.Bundle),
 			})
 			if err != nil {

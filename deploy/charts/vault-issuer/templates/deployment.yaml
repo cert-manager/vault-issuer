@@ -1,80 +1,84 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "vault-issuer.fullname" . }}
-  namespace: {{ .Release.Namespace }}
+  name: {{ include "vault-issuer.name" . }}
+  namespace: {{ include "vault-issuer.namespace" . }}
   labels:
     {{- include "vault-issuer.labels" . | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   selector:
     matchLabels:
-      {{- include "vault-issuer.selectorLabels" . | nindent 6 }}
+      app: {{ include "vault-issuer.name" . }}
   template:
     metadata:
-      labels:
-        {{- include "vault-issuer.selectorLabels" . | nindent 8 }}
-        {{- with .Values.podLabels }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
-      {{- with .Values.podAnnotations }}
+      {{- with .Values.app.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      labels:
+        app: {{ include "vault-issuer.name" . }}
+        {{- include "vault-issuer.labels" . | nindent 8 }}
+        {{- with .Values.app.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       serviceAccountName: {{ include "vault-issuer.serviceAccountName" . }}
-      {{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
+      {{- if hasKey .Values "automountServiceAccountToken" }}
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
+      {{- end }}
+      containers:
+      - name: {{ include "vault-issuer.name" . }}
+        image: "{{ template "vault-issuer.image" (tuple .Values.image .Values.imageRegistry .Values.imageNamespace (printf ":%s" $.Chart.AppVersion)) }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.app.metrics.port }}
+          name: metrics # for the PodMonitor port field
+        readinessProbe:
+          httpGet:
+            port: {{ .Values.app.readinessProbe.port }}
+            path: {{ .Values.app.readinessProbe.path }}
+          initialDelaySeconds: 3
+          periodSeconds: 7
+        args:
+          - "--log-format={{.Values.app.logFormat}}"
+          - "--log-level={{.Values.app.logLevel}}"
+          - "--metrics-port={{.Values.app.metrics.port}}"
+          - "--readiness-probe-port={{.Values.app.readinessProbe.port}}"
+          - "--readiness-probe-path={{.Values.app.readinessProbe.path}}"
+          - "--leader-elect={{.Values.app.leaderElection.enabled}}"
+          - "--leader-election-lease-duration={{.Values.app.leaderElection.leaseDuration}}"
+          - "--leader-election-renew-deadline={{.Values.app.leaderElection.renewDeadline}}"
+            # issuer
+          - "--cluster-resource-namespace={{ include "vault-issuer.clusterResourceNamespace" . }}"
+          - "--issuer-ambient-credentials={{.Values.app.issuer.ambientCredentials}}"
+          - "--cluster-issuer-ambient-credentials={{.Values.app.issuer.clusterAmbientCredentials}}"
+          - "--max-retry-duration={{.Values.app.issuer.maxRetryDuration}}"
+          {{- with .Values.app.extraArgs }}
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
+        {{- with .Values.volumeMounts }}
+        volumeMounts:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+        {{- with .Values.app.securityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      containers:
-        - name: vault-issuer
-          image: {{ include "vault-issuer.image" . | quote }}
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          args:
-            - --cluster-resource-namespace={{ include "vault-issuer.clusterResourceNamespace" . }}
-            - --issuer-ambient-credentials={{ .Values.issuerAmbientCredentials }}
-            - --cluster-issuer-ambient-credentials={{ .Values.clusterIssuerAmbientCredentials }}
-            - --max-retry-duration={{ .Values.maxRetryDuration }}
-            - --leader-elect={{ .Values.leaderElection.enabled }}
-            - --leader-election-lease-duration={{ .Values.leaderElection.leaseDuration }}
-            - --leader-election-renew-deadline={{ .Values.leaderElection.renewDeadline }}
-            - --readiness-probe-port={{ .Values.readinessProbePort }}
-            - --readiness-probe-path=/readyz
-            - --log-format={{ .Values.logFormat }}
-            - --log-level={{ .Values.logLevel }}
-            {{- with .Values.extraArgs }}
-            {{- toYaml . | nindent 12 }}
-            {{- end }}
-          ports:
-            # The manager serves metrics on controller-runtime's default
-            # address. The --metrics-port flag is currently inert: app.go leaves
-            # the Metrics options commented out.
-            - name: metrics
-              containerPort: 8080
-              protocol: TCP
-            # Liveness and readiness share one server, at --readiness-probe-port.
-            - name: probes
-              containerPort: {{ .Values.readinessProbePort }}
-              protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: probes
-            initialDelaySeconds: 15
-            periodSeconds: 20
-          readinessProbe:
-            httpGet:
-              path: /readyz
-              port: probes
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.priorityClassName }}
+      priorityClassName: "{{ . }}"
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -86,4 +90,12 @@ spec:
       {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.volumes }}
+      volumes:
+      {{- toYaml . | nindent 6 }}
       {{- end }}

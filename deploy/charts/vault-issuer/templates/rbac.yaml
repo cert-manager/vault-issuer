@@ -1,0 +1,86 @@
+{{- if .Values.global.rbac.create }}
+{{/*
+The rules below are generated from the +kubebuilder:rbac markers in
+internal/controller by `make generate-rbac`, which writes files/role.yaml.
+Edit the markers, not this file.
+*/}}
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ include "vault-issuer.name" . }}
+  labels:
+    {{- include "vault-issuer.labels" . | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- with (.Files.Get "files/role.yaml" | fromYaml) }}
+rules:
+  {{- toYaml .rules | nindent 2 }}
+{{- end }}
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ include "vault-issuer.name" . }}
+  labels:
+    {{- include "vault-issuer.labels" . | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "vault-issuer.name" . }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "vault-issuer.serviceAccountName" . }}
+  namespace: {{ include "vault-issuer.namespace" . }}
+---
+{{/*
+Leader election is namespaced to the installation namespace.
+*/}}
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ include "vault-issuer.name" . }}:leaderelection
+  namespace: {{ include "vault-issuer.namespace" . }}
+  labels:
+    {{- include "vault-issuer.labels" . | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+rules:
+- apiGroups:
+  - "coordination.k8s.io"
+  resources:
+  - "leases"
+  verbs:
+  - "get"
+  - "create"
+  - "update"
+  - "watch"
+  - "list"
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ include "vault-issuer.name" . }}:leaderelection
+  namespace: {{ include "vault-issuer.namespace" . }}
+  labels:
+    {{- include "vault-issuer.labels" . | nindent 4 }}
+  {{- with .Values.commonAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "vault-issuer.name" . }}:leaderelection
+subjects:
+- kind: ServiceAccount
+  name: {{ include "vault-issuer.serviceAccountName" . }}
+  namespace: {{ include "vault-issuer.namespace" . }}
+{{- end -}}

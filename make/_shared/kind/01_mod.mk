@@ -12,6 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include make/generate-rbac.mk
-include make/test-unit.mk
-include make/test-e2e.mk
+include $(dir $(lastword $(MAKEFILE_LIST)))/kind.mk
+include $(dir $(lastword $(MAKEFILE_LIST)))/kind-image-preload.mk

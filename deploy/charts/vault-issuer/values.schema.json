@@ -1,0 +1,611 @@
+{
+  "$defs": {
+    "helm-values": {
+      "additionalProperties": false,
+      "properties": {
+        "affinity": {
+          "$ref": "#/$defs/helm-values.affinity"
+        },
+        "app": {
+          "$ref": "#/$defs/helm-values.app"
+        },
+        "automountServiceAccountToken": {
+          "$ref": "#/$defs/helm-values.automountServiceAccountToken"
+        },
+        "commonAnnotations": {
+          "$ref": "#/$defs/helm-values.commonAnnotations"
+        },
+        "commonLabels": {
+          "$ref": "#/$defs/helm-values.commonLabels"
+        },
+        "enabled": {
+          "$ref": "#/$defs/helm-values.enabled"
+        },
+        "extraObjects": {
+          "$ref": "#/$defs/helm-values.extraObjects"
+        },
+        "global": {
+          "$ref": "#/$defs/helm-values.global"
+        },
+        "image": {
+          "$ref": "#/$defs/helm-values.image"
+        },
+        "imageNamespace": {
+          "$ref": "#/$defs/helm-values.imageNamespace"
+        },
+        "imagePullSecrets": {
+          "$ref": "#/$defs/helm-values.imagePullSecrets"
+        },
+        "imageRegistry": {
+          "$ref": "#/$defs/helm-values.imageRegistry"
+        },
+        "nameOverride": {
+          "$ref": "#/$defs/helm-values.nameOverride"
+        },
+        "namespace": {
+          "$ref": "#/$defs/helm-values.namespace"
+        },
+        "nodeSelector": {
+          "$ref": "#/$defs/helm-values.nodeSelector"
+        },
+        "podDisruptionBudget": {
+          "$ref": "#/$defs/helm-values.podDisruptionBudget"
+        },
+        "podSecurityContext": {
+          "$ref": "#/$defs/helm-values.podSecurityContext"
+        },
+        "priorityClassName": {
+          "$ref": "#/$defs/helm-values.priorityClassName"
+        },
+        "replicaCount": {
+          "$ref": "#/$defs/helm-values.replicaCount"
+        },
+        "resources": {
+          "$ref": "#/$defs/helm-values.resources"
+        },
+        "revisionHistoryLimit": {
+          "$ref": "#/$defs/helm-values.revisionHistoryLimit"
+        },
+        "serviceAccount": {
+          "$ref": "#/$defs/helm-values.serviceAccount"
+        },
+        "tolerations": {
+          "$ref": "#/$defs/helm-values.tolerations"
+        },
+        "topologySpreadConstraints": {
+          "$ref": "#/$defs/helm-values.topologySpreadConstraints"
+        },
+        "volumeMounts": {
+          "$ref": "#/$defs/helm-values.volumeMounts"
+        },
+        "volumes": {
+          "$ref": "#/$defs/helm-values.volumes"
+        }
+      },
+      "type": "object"
+    },
+    "helm-values.affinity": {
+      "default": {},
+      "description": "Kubernetes Affinity. For more information, see [Affinity v1 core](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#affinity-v1-core).\nFor example:\naffinity:\n  nodeAffinity:\n   requiredDuringSchedulingIgnoredDuringExecution:\n     nodeSelectorTerms:\n     - matchExpressions:\n       - key: foo.bar.com/role\n         operator: In\n         values:\n         - master",
+      "type": "object"
+    },
+    "helm-values.app": {
+      "additionalProperties": false,
+      "properties": {
+        "extraArgs": {
+          "$ref": "#/$defs/helm-values.app.extraArgs"
+        },
+        "issuer": {
+          "$ref": "#/$defs/helm-values.app.issuer"
+        },
+        "leaderElection": {
+          "$ref": "#/$defs/helm-values.app.leaderElection"
+        },
+        "logFormat": {
+          "$ref": "#/$defs/helm-values.app.logFormat"
+        },
+        "logLevel": {
+          "$ref": "#/$defs/helm-values.app.logLevel"
+        },
+        "metrics": {
+          "$ref": "#/$defs/helm-values.app.metrics"
+        },
+        "podAnnotations": {
+          "$ref": "#/$defs/helm-values.app.podAnnotations"
+        },
+        "podLabels": {
+          "$ref": "#/$defs/helm-values.app.podLabels"
+        },
+        "readinessProbe": {
+          "$ref": "#/$defs/helm-values.app.readinessProbe"
+        },
+        "securityContext": {
+          "$ref": "#/$defs/helm-values.app.securityContext"
+        }
+      },
+      "type": "object"
+    },
+    "helm-values.app.extraArgs": {
+      "default": [],
+      "description": "Extra command line arguments passed to vault-issuer.",
+      "items": {},
+      "type": "array"
+    },
+    "helm-values.app.issuer": {
+      "additionalProperties": false,
+      "properties": {
+        "ambientCredentials": {
+          "$ref": "#/$defs/helm-values.app.issuer.ambientCredentials"
+        },
+        "clusterAmbientCredentials": {
+          "$ref": "#/$defs/helm-values.app.issuer.clusterAmbientCredentials"
+        },
+        "clusterResourceNamespace": {
+          "$ref": "#/$defs/helm-values.app.issuer.clusterResourceNamespace"
+        },
+        "maxRetryDuration": {
+          "$ref": "#/$defs/helm-values.app.issuer.maxRetryDuration"
+        }
+      },
+      "type": "object"
+    },
+    "helm-values.app.issuer.ambientCredentials": {
+      "default": false,
+      "description": "Allow namespaced Issuers to authenticate with credentials drawn from the controller's environment, such as instance metadata or IRSA, rather than from the Issuer's spec.\n\nThis is off by default: anyone who can create an Issuer in any namespace could otherwise borrow the controller's cloud identity.",
+      "type": "boolean"
+    },
+    "helm-values.app.issuer.clusterAmbientCredentials": {
+      "default": true,
+      "description": "Allow ClusterIssuers to authenticate with credentials drawn from the controller's environment. ClusterIssuers are cluster-scoped and therefore managed by cluster administrators, so this is on by default.",
+      "type": "boolean"
+    },
+    "helm-values.app.issuer.clusterResourceNamespace": {
+      "default": "",
+      "description": "The namespace Secrets referenced by a ClusterIssuer are read from.\n\nNamespaced Issuers always read their Secrets from their own namespace; this setting only applies to cluster-scoped Issuers, which have no namespace of their own. Defaults to the namespace vault-issuer is installed into.",
+      "type": "string"
+    },
+    "helm-values.app.issuer.maxRetryDuration": {
+      "default": "2m",
+      "description": "How long a CertificateRequest is retried after a transient signing error, measured from when the request was created. Once exceeded, the request fails and cert-manager creates a new one.",
+      "type": "string"
+    },
+    "helm-values.app.leaderElection": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/helm-values.app.leaderElection.enabled"
+        },
+        "leaseDuration": {
+          "$ref": "#/$defs/helm-values.app.leaderElection.leaseDuration"
+        },
+        "renewDeadline": {
+          "$ref": "#/$defs/helm-values.app.leaderElection.renewDeadline"
+        }
+      },
+      "type": "object"
+    },
+    "helm-values.app.leaderElection.enabled": {
+      "default": true,
+      "description": "Whether to enable leader election for vault-issuer.",
+      "type": "boolean"
+    },
+    "helm-values.app.leaderElection.leaseDuration": {
+      "default": "15s",
+      "description": "The duration that non-leader candidates will wait to force acquire leadership. The default should be sufficient in a healthy cluster but can be slightly increased to prevent vault-issuer from restart-looping when the\nAPI server is overloaded.",
+      "type": "string"
+    },
+    "helm-values.app.leaderElection.renewDeadline": {
+      "default": "10s",
+      "description": "The interval between attempts by the acting leader to renew a leadership slot before it stops leading. This MUST be less than or equal to the lease duration. The default should be sufficient in a healthy cluster but can be slightly increased to prevent vault-issuer from restart-looping when the\nAPI server is overloaded.",
+      "type": "string"
+    },
+    "helm-values.app.logFormat": {
+      "default": "text",
+      "description": "The format of vault-issuer logging. Accepted values are text or json.",
+      "type": "string"
+    },
+    "helm-values.app.logLevel": {
+      "default": 1,
+      "description": "The verbosity of vault-issuer logging. This takes a value from 1-5, with the higher value being more verbose.",
+      "type": "number"
+    },
+    "helm-values.app.metrics": {
+      "additionalProperties": false,
+      "properties": {
+        "port": {
+          "$ref": "#/$defs/helm-values.app.metrics.port"
+        },
+        "service": {
+          "$ref": "#/$defs/helm-values.app.metrics.service"
+        }
+      },
+      "type": "object"
+    },
+    "helm-values.app.metrics.port": {
+      "default": 9402,
+      "description": "The port for exposing Prometheus metrics on 0.0.0.0 on path '/metrics'.",
+      "type": "number"
+    },
+    "helm-values.app.metrics.service": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/helm-values.app.metrics.service.enabled"
+        },
+        "ipFamilies": {
+          "$ref": "#/$defs/helm-values.app.metrics.service.ipFamilies"
+        },
+        "ipFamilyPolicy": {
+          "$ref": "#/$defs/helm-values.app.metrics.service.ipFamilyPolicy"
+        },
+        "servicemonitor": {
+          "$ref": "#/$defs/helm-values.app.metrics.service.servicemonitor"
+        },
+        "type": {
+          "$ref": "#/$defs/helm-values.app.metrics.service.type"
+        }
+      },
+      "type": "object"
+    },
+    "helm-values.app.metrics.service.enabled": {
+      "default": true,
+      "description": "Create a Service resource to expose the metrics endpoint.",
+      "type": "boolean"
+    },
+    "helm-values.app.metrics.service.ipFamilies": {
+      "default": [],
+      "description": "Sets the families that should be supported and the order in which they should be applied to ClusterIP as well. Can be IPv4 and/or IPv6.",
+      "items": {},
+      "type": "array"
+    },
+    "helm-values.app.metrics.service.ipFamilyPolicy": {
+      "default": "",
+      "description": "Set the ip family policy to configure dual-stack see [Configure dual-stack](https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services)",
+      "type": "string"
+    },
+    "helm-values.app.metrics.service.servicemonitor": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/helm-values.app.metrics.service.servicemonitor.enabled"
+        },
+        "endpointAdditionalProperties": {
+          "$ref": "#/$defs/helm-values.app.metrics.service.servicemonitor.endpointAdditionalProperties"
+        },
+        "interval": {
+          "$ref": "#/$defs/helm-values.app.metrics.service.servicemonitor.interval"
+        },
+        "labels": {
+          "$ref": "#/$defs/helm-values.app.metrics.service.servicemonitor.labels"
+        },
+        "prometheusInstance": {
+          "$ref": "#/$defs/helm-values.app.metrics.service.servicemonitor.prometheusInstance"
+        },
+        "scrapeTimeout": {
+          "$ref": "#/$defs/helm-values.app.metrics.service.servicemonitor.scrapeTimeout"
+        }
+      },
+      "type": "object"
+    },
+    "helm-values.app.metrics.service.servicemonitor.enabled": {
+      "default": false,
+      "description": "Create a Prometheus ServiceMonitor for vault-issuer.",
+      "type": "boolean"
+    },
+    "helm-values.app.metrics.service.servicemonitor.endpointAdditionalProperties": {
+      "default": {},
+      "description": "EndpointAdditionalProperties allows setting additional properties on the endpoint such as relabelings, metricRelabelings etc.\n\nFor example:\nendpointAdditionalProperties:\n relabelings:\n - action: replace\n   sourceLabels:\n   - __meta_kubernetes_pod_node_name\n   targetLabel: instance",
+      "type": "object"
+    },
+    "helm-values.app.metrics.service.servicemonitor.interval": {
+      "default": "10s",
+      "description": "The interval to scrape the metrics.",
+      "type": "string"
+    },
+    "helm-values.app.metrics.service.servicemonitor.labels": {
+      "default": {},
+      "description": "Additional labels to add to the ServiceMonitor.",
+      "type": "object"
+    },
+    "helm-values.app.metrics.service.servicemonitor.prometheusInstance": {
+      "default": "default",
+      "description": "Sets the value of the \"prometheus\" label on the ServiceMonitor. This is used so that separate Prometheus instances can select different ServiceMonitors using labels.",
+      "type": "string"
+    },
+    "helm-values.app.metrics.service.servicemonitor.scrapeTimeout": {
+      "default": "5s",
+      "description": "The timeout for a metrics scrape.",
+      "type": "string"
+    },
+    "helm-values.app.metrics.service.type": {
+      "default": "ClusterIP",
+      "description": "The Service type to expose metrics.",
+      "type": "string"
+    },
+    "helm-values.app.podAnnotations": {
+      "default": {},
+      "description": "Pod annotations to add to vault-issuer pods.",
+      "type": "object"
+    },
+    "helm-values.app.podLabels": {
+      "default": {},
+      "description": "Pod labels to add to vault-issuer pods.",
+      "type": "object"
+    },
+    "helm-values.app.readinessProbe": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/helm-values.app.readinessProbe.path"
+        },
+        "port": {
+          "$ref": "#/$defs/helm-values.app.readinessProbe.port"
+        }
+      },
+      "type": "object"
+    },
+    "helm-values.app.readinessProbe.path": {
+      "default": "/readyz",
+      "description": "The path on which to expose the vault-issuer HTTP readiness probe using the default network interface.",
+      "type": "string"
+    },
+    "helm-values.app.readinessProbe.port": {
+      "default": 6060,
+      "description": "The container port on which to expose the vault-issuer HTTP readiness probe using the default network interface.",
+      "type": "number"
+    },
+    "helm-values.app.securityContext": {
+      "default": {
+        "allowPrivilegeEscalation": false,
+        "capabilities": {
+          "drop": [
+            "ALL"
+          ]
+        },
+        "readOnlyRootFilesystem": true,
+        "runAsNonRoot": true,
+        "seccompProfile": {
+          "type": "RuntimeDefault"
+        }
+      },
+      "description": "Security Context to be set on the vault-issuer app container. For more information, see [Configure a Security Context for a Pod or Container](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/).",
+      "type": "object"
+    },
+    "helm-values.automountServiceAccountToken": {
+      "default": true,
+      "description": "Automounting API credentials for the vault-issuer pod. Required: the controller talks to the Kubernetes API.",
+      "type": "boolean"
+    },
+    "helm-values.commonAnnotations": {
+      "default": {},
+      "description": "Annotations to apply to all resources",
+      "type": "object"
+    },
+    "helm-values.commonLabels": {
+      "default": {},
+      "description": "Labels to apply to all resources",
+      "type": "object"
+    },
+    "helm-values.enabled": {
+      "default": true,
+      "description": "Field to optionally disable installation of the chart when wrapping it as a dependency in another chart.\nThis matches the helm best practices:\nhttps://helm.sh/docs/chart_best_practices/dependencies/#conditions-and-tags",
+      "type": "boolean"
+    },
+    "helm-values.extraObjects": {
+      "default": [],
+      "description": "Extra manifests to be deployed. This is useful for deploying additional resources that are not part of the chart.\nFor example:\nextraObjects:\n - apiVersion: cilium.io/v2\n   kind: CiliumNetworkPolicy\n   metadata:\n     name: vault-issuer\n     namespace: cert-manager\n   spec:\n     endpointSelector:\n       matchLabels:\n         io.cilium.k8s.policy.serviceaccount: vault-issuer\n     egress:\n       - toEntities:\n           - kube-apiserver",
+      "items": {},
+      "type": "array"
+    },
+    "helm-values.global": {
+      "description": "Global values shared across all (sub)charts",
+      "properties": {
+        "rbac": {
+          "$ref": "#/$defs/helm-values.global.rbac"
+        }
+      },
+      "type": "object"
+    },
+    "helm-values.global.rbac": {
+      "properties": {
+        "create": {
+          "$ref": "#/$defs/helm-values.global.rbac.create"
+        }
+      },
+      "type": "object"
+    },
+    "helm-values.global.rbac.create": {
+      "default": true,
+      "description": "Create the ClusterRole, ClusterRoleBinding, Roles and RoleBindings that vault-issuer needs.",
+      "type": "boolean"
+    },
+    "helm-values.image": {
+      "additionalProperties": false,
+      "properties": {
+        "digest": {
+          "$ref": "#/$defs/helm-values.image.digest"
+        },
+        "name": {
+          "$ref": "#/$defs/helm-values.image.name"
+        },
+        "pullPolicy": {
+          "$ref": "#/$defs/helm-values.image.pullPolicy"
+        },
+        "repository": {
+          "$ref": "#/$defs/helm-values.image.repository"
+        },
+        "tag": {
+          "$ref": "#/$defs/helm-values.image.tag"
+        }
+      },
+      "type": "object"
+    },
+    "helm-values.image.digest": {
+      "description": "Target image digest. Override any tag, if set.\nFor example:\ndigest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20",
+      "type": "string"
+    },
+    "helm-values.image.name": {
+      "default": "vault-issuer",
+      "description": "The image name for vault-issuer.\nThis is used (together with `imageRegistry` and `imageNamespace`) to construct the full image reference.",
+      "type": "string"
+    },
+    "helm-values.image.pullPolicy": {
+      "default": "IfNotPresent",
+      "description": "Kubernetes imagePullPolicy on Deployment.",
+      "type": "string"
+    },
+    "helm-values.image.repository": {
+      "default": "",
+      "description": "Full repository override (takes precedence over `imageRegistry`,\n`imageNamespace`, and `image.name`).\nExample: quay.io/jetstack/vault-issuer",
+      "type": "string"
+    },
+    "helm-values.image.tag": {
+      "description": "Override the image tag to deploy by setting this variable. If no value is set, the chart's appVersion is used.",
+      "type": "string"
+    },
+    "helm-values.imageNamespace": {
+      "default": "jetstack",
+      "description": "The repository namespace used for vault-issuer images by default.\nExamples:\n- jetstack\n- cert-manager",
+      "type": "string"
+    },
+    "helm-values.imagePullSecrets": {
+      "default": [],
+      "description": "For Private docker registries, authentication is needed. Registry secrets are applied to the service account.",
+      "items": {},
+      "type": "array"
+    },
+    "helm-values.imageRegistry": {
+      "default": "quay.io",
+      "description": "The container registry used for vault-issuer images by default. This can include path prefixes (e.g. \"artifactory.example.com/docker\").",
+      "type": "string"
+    },
+    "helm-values.nameOverride": {
+      "default": "",
+      "type": "string"
+    },
+    "helm-values.namespace": {
+      "default": "",
+      "description": "The namespace to install vault-issuer into.\nIf not set, the namespace of the release is used.\nThis is helpful when installing vault-issuer as a chart dependency (sub chart).",
+      "type": "string"
+    },
+    "helm-values.nodeSelector": {
+      "default": {
+        "kubernetes.io/os": "linux"
+      },
+      "description": "Configure the nodeSelector; defaults to any Linux node (vault-issuer doesn't support Windows nodes)",
+      "type": "object"
+    },
+    "helm-values.podDisruptionBudget": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/helm-values.podDisruptionBudget.enabled"
+        },
+        "maxUnavailable": {
+          "$ref": "#/$defs/helm-values.podDisruptionBudget.maxUnavailable"
+        },
+        "minAvailable": {
+          "$ref": "#/$defs/helm-values.podDisruptionBudget.minAvailable"
+        }
+      },
+      "type": "object"
+    },
+    "helm-values.podDisruptionBudget.enabled": {
+      "default": false,
+      "description": "Enable or disable the PodDisruptionBudget resource.\n\nThis prevents downtime during voluntary disruptions such as during a Node upgrade. For example, the PodDisruptionBudget will block `kubectl drain` if it is used on the Node where the only remaining vault-issuer\nPod is currently running.",
+      "type": "boolean"
+    },
+    "helm-values.podDisruptionBudget.maxUnavailable": {
+      "description": "This configures the maximum unavailable pods for disruptions. It can either be set to an integer (e.g. 1) or a percentage value (e.g. 25%).\nIt cannot be used if `minAvailable` is set."
+    },
+    "helm-values.podDisruptionBudget.minAvailable": {
+      "description": "This configures the minimum available pods for disruptions. It can either be set to an integer (e.g. 1) or a percentage value (e.g. 25%).\nIt cannot be used if `maxUnavailable` is set."
+    },
+    "helm-values.podSecurityContext": {
+      "default": {},
+      "description": "Security Context to be set on the vault-issuer Pod. For more information, see [Configure a Security Context for a Pod or Container](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/).",
+      "type": "object"
+    },
+    "helm-values.priorityClassName": {
+      "default": "",
+      "description": "Configure the priority class of the pod. For more information, see\n[PriorityClass](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#priorityclass).",
+      "type": "string"
+    },
+    "helm-values.replicaCount": {
+      "default": 1,
+      "description": "The number of replicas of vault-issuer to run.\n\nLeader election is enabled, so only one replica reconciles at a time; the others stand by.\n\nFor example:\n Use integer to set a fixed number of replicas\nreplicaCount: 2\nUse null, if you want to omit the replicas field and use the Kubernetes default value.\nreplicaCount: null\nUse a string if you want to insert a variable for post-processing of the rendered template.\nreplicaCount: ${REPLICAS_OVERRIDE:=3}"
+    },
+    "helm-values.resources": {
+      "default": {},
+      "description": "Kubernetes pod resources for vault-issuer.\n\nFor example:\nresources:\n  limits:\n    cpu: 100m\n    memory: 128Mi\n  requests:\n    cpu: 100m\n    memory: 128Mi",
+      "type": "object"
+    },
+    "helm-values.revisionHistoryLimit": {
+      "default": 10,
+      "description": "The number of old ReplicaSets to retain to allow rollback.\nIf set to 0, no old ReplicaSets are retained."
+    },
+    "helm-values.serviceAccount": {
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "$ref": "#/$defs/helm-values.serviceAccount.annotations"
+        },
+        "automountServiceAccountToken": {
+          "$ref": "#/$defs/helm-values.serviceAccount.automountServiceAccountToken"
+        },
+        "create": {
+          "$ref": "#/$defs/helm-values.serviceAccount.create"
+        },
+        "name": {
+          "$ref": "#/$defs/helm-values.serviceAccount.name"
+        }
+      },
+      "type": "object"
+    },
+    "helm-values.serviceAccount.annotations": {
+      "default": {},
+      "description": "Annotations to add to the ServiceAccount, for example to bind a cloud identity to it.",
+      "type": "object"
+    },
+    "helm-values.serviceAccount.automountServiceAccountToken": {
+      "default": true,
+      "description": "Automount API credentials for a Service Account.",
+      "type": "boolean"
+    },
+    "helm-values.serviceAccount.create": {
+      "default": true,
+      "description": "Specifies whether a service account should be created.",
+      "type": "boolean"
+    },
+    "helm-values.serviceAccount.name": {
+      "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the name template.",
+      "type": "string"
+    },
+    "helm-values.tolerations": {
+      "default": [],
+      "description": "List of Kubernetes Tolerations, if required. For more information, see\n[Toleration v1 core](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#toleration-v1-core).\nFor example:\ntolerations:\n- key: foo.bar.com/role\n  operator: Equal\n  value: master\n  effect: NoSchedule",
+      "items": {},
+      "type": "array"
+    },
+    "helm-values.topologySpreadConstraints": {
+      "default": [],
+      "description": "List of Kubernetes TopologySpreadConstraints. For more information, see\n[TopologySpreadConstraint v1 core](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#topologyspreadconstraint-v1-core).\nFor example:\ntopologySpreadConstraints:\n- maxSkew: 2\n  topologyKey: topology.kubernetes.io/zone\n  whenUnsatisfiable: ScheduleAnyway\n  labelSelector:\n    matchLabels:\n      app.kubernetes.io/name: vault-issuer",
+      "items": {},
+      "type": "array"
+    },
+    "helm-values.volumeMounts": {
+      "default": [],
+      "description": "Additional volume mounts to add to the vault-issuer container.",
+      "items": {},
+      "type": "array"
+    },
+    "helm-values.volumes": {
+      "default": [],
+      "description": "Additional volumes to add to the vault-issuer pod.",
+      "items": {},
+      "type": "array"
+    }
+  },
+  "$ref": "#/$defs/helm-values",
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

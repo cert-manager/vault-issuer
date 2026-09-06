@@ -11,6 +11,16 @@ targets:
       repo_ref: main
       repo_hash: 1745d148d35a55cbc3eca05233479d1fea3b1a28
       repo_path: modules/boilerplate
+    - folder_name: cert-manager
+      repo_url: https://github.com/cert-manager/makefile-modules.git
+      repo_ref: main
+      repo_hash: 1745d148d35a55cbc3eca05233479d1fea3b1a28
+      repo_path: modules/cert-manager
+    - folder_name: controller-gen
+      repo_url: https://github.com/cert-manager/makefile-modules.git
+      repo_ref: main
+      repo_hash: 1745d148d35a55cbc3eca05233479d1fea3b1a28
+      repo_path: modules/controller-gen
     - folder_name: generate-verify
       repo_url: https://github.com/cert-manager/makefile-modules.git
       repo_ref: main
@@ -21,16 +31,31 @@ targets:
       repo_ref: main
       repo_hash: 1745d148d35a55cbc3eca05233479d1fea3b1a28
       repo_path: modules/go
+    - folder_name: helm
+      repo_url: https://github.com/cert-manager/makefile-modules.git
+      repo_ref: main
+      repo_hash: 1745d148d35a55cbc3eca05233479d1fea3b1a28
+      repo_path: modules/helm
     - folder_name: help
       repo_url: https://github.com/cert-manager/makefile-modules.git
       repo_ref: main
       repo_hash: 1745d148d35a55cbc3eca05233479d1fea3b1a28
       repo_path: modules/help
+    - folder_name: kind
+      repo_url: https://github.com/cert-manager/makefile-modules.git
+      repo_ref: main
+      repo_hash: 1745d148d35a55cbc3eca05233479d1fea3b1a28
+      repo_path: modules/kind
     - folder_name: klone
       repo_url: https://github.com/cert-manager/makefile-modules.git
       repo_ref: main
       repo_hash: 1745d148d35a55cbc3eca05233479d1fea3b1a28
       repo_path: modules/klone
+    - folder_name: oci-build
+      repo_url: https://github.com/cert-manager/makefile-modules.git
+      repo_ref: main
+      repo_hash: 1745d148d35a55cbc3eca05233479d1fea3b1a28
+      repo_path: modules/oci-build
     - folder_name: repository-base
       repo_url: https://github.com/cert-manager/makefile-modules.git
       repo_ref: main

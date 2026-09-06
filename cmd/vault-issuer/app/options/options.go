@@ -1,0 +1,239 @@
+/*
+Copyright 2026 The cert-manager Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package options
+
+import (
+	"errors"
+	"fmt"
+	"log/slog"
+	"os"
+	"time"
+
+	"github.com/go-logr/logr"
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/rest"
+	cliflag "k8s.io/component-base/cli/flag"
+
+	"github.com/cert-manager/vault-issuer/internal/controller"
+
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+)
+
+type LeaderElectionConfig struct {
+	// If true, vault-issuer will perform leader election between instances to
+	// ensure no more than one instance of trust-manager operates at a time
+	Enabled bool
+
+	// The duration that non-leader candidates will wait after observing a leadership
+	// renewal until attempting to acquire leadership of a led but unrenewed leader
+	// slot. This is effectively the maximum duration that a leader can be stopped
+	// before it is replaced by another candidate. This is only applicable if leader
+	// election is enabled.
+	LeaseDuration time.Duration
+
+	// The interval between attempts by the acting master to renew a leadership slot
+	// before it stops leading. This must be less than or equal to the lease duration.
+	// This is only applicable if leader election is enabled.
+	RenewDeadline time.Duration
+}
+
+// Options is a struct to hold options for trust-manager
+type Options struct {
+	kubeConfigFlags *genericclioptions.ConfigFlags
+
+	// ReadyzPort if the port used to expose Prometheus metrics.
+	ReadyzPort int
+	// ReadyzPath if the HTTP path used to expose Prometheus metrics.
+	ReadyzPath string
+
+	// MetricsPort is the port for exposing Prometheus metrics on 0.0.0.0 on the
+	// path '/metrics'.
+	MetricsPort int
+
+	// RestConfig is the shared based rest config to connect to the Kubernetes
+	// API.
+	RestConfig *rest.Config
+
+	// log are options controlling logging
+	log logOptions
+
+	LeaderElectionConfig LeaderElectionConfig
+
+	IssuerOptions controller.Options
+}
+
+type logOptions struct {
+	format logFormat
+	level  int
+}
+
+const (
+	logFormatText logFormat = "text"
+	logFormatJSON logFormat = "json"
+)
+
+type logFormat string
+
+// String is used both by fmt.Print and by Cobra in help text
+func (e *logFormat) String() string {
+	if len(*e) == 0 {
+		return string(logFormatText)
+	}
+	return string(*e)
+}
+
+// Set must have pointer receiver to avoid changing the value of a copy
+func (e *logFormat) Set(v string) error {
+	switch v {
+	case "text", "json":
+		*e = logFormat(v)
+		return nil
+	default:
+		return errors.New(`must be one of "text" or "json"`)
+	}
+}
+
+// Type is only used in help text
+func (e *logFormat) Type() string {
+	return "string"
+}
+
+// New constructs a new Options.
+func New() *Options {
+	return new(Options)
+}
+
+// Prepare adds Options flags to the CLI command.
+func (o *Options) Prepare(cmd *cobra.Command) *Options {
+	o.addFlags(cmd)
+	return o
+}
+
+// NewLogger constructs a new root logger based on the CLI flags.
+func (o *Options) NewLogger() logr.Logger {
+	opts := &slog.HandlerOptions{
+		// To avoid a breaking change in application configuration,
+		// we negate the (configured) logr verbosity level to get the corresponding slog level
+		Level: slog.Level(-o.log.level),
+	}
+	var handler slog.Handler = slog.NewTextHandler(os.Stdout, opts)
+	if o.log.format == logFormatJSON {
+		handler = slog.NewJSONHandler(os.Stdout, opts)
+	}
+
+	slog.SetDefault(slog.New(handler))
+
+	return logr.FromSlogHandler(handler)
+}
+
+// Complete will populate the remaining Options from the CLI flags. Must be run
+// before consuming Options.
+func (o *Options) Complete() error {
+	var err error
+	o.RestConfig, err = o.kubeConfigFlags.ToRESTConfig()
+	if err != nil {
+		return fmt.Errorf("failed to build kubernetes rest config: %s", err)
+	}
+
+	return nil
+}
+
+// addFlags add all Options flags to the given command.
+func (o *Options) addFlags(cmd *cobra.Command) {
+	var nfs cliflag.NamedFlagSets
+
+	o.addAppFlags(nfs.FlagSet("App"))
+	o.addLoggingFlags(nfs.FlagSet("Logging"))
+	o.addIssuerFlags(nfs.FlagSet("Issuer"))
+	o.kubeConfigFlags = genericclioptions.NewConfigFlags(true)
+	o.kubeConfigFlags.AddFlags(nfs.FlagSet("Kubernetes"))
+
+	usageFmt := "Usage:\n  %s\n"
+	cmd.SetUsageFunc(func(cmd *cobra.Command) error {
+		fmt.Fprintf(cmd.OutOrStderr(), usageFmt, cmd.UseLine())
+		cliflag.PrintSections(cmd.OutOrStderr(), nfs, 0)
+		return nil
+	})
+
+	cmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
+		fmt.Fprintf(cmd.OutOrStdout(), "%s\n\n"+usageFmt, cmd.Long, cmd.UseLine())
+		cliflag.PrintSections(cmd.OutOrStdout(), nfs, 0)
+	})
+
+	fs := cmd.Flags()
+	for _, f := range nfs.FlagSets {
+		fs.AddFlagSet(f)
+	}
+}
+
+func (o *Options) addAppFlags(fs *pflag.FlagSet) {
+	fs.IntVar(&o.ReadyzPort,
+		"readiness-probe-port", 6060,
+		"Port to expose the readiness probe.")
+
+	fs.StringVar(&o.ReadyzPath,
+		"readiness-probe-path", "/readyz",
+		"HTTP path to expose the readiness probe server.")
+
+	fs.BoolVar(&o.LeaderElectionConfig.Enabled, "leader-elect", true, ""+
+		"If true, trust-manager will perform leader election between instances to ensure no more "+
+		"than one instance of trust-manager operates at a time")
+
+	fs.DurationVar(&o.LeaderElectionConfig.LeaseDuration,
+		"leader-election-lease-duration", time.Second*15,
+		"Lease duration for leader election")
+
+	fs.DurationVar(&o.LeaderElectionConfig.RenewDeadline,
+		"leader-election-renew-deadline", time.Second*10,
+		"Lease renew deadline for leader election.")
+
+	fs.IntVar(&o.MetricsPort,
+		"metrics-port", 9402,
+		"Port to expose Prometheus metrics on 0.0.0.0 on path '/metrics'.")
+}
+
+func (o *Options) addIssuerFlags(fs *pflag.FlagSet) {
+	fs.StringVar(&o.IssuerOptions.ClusterResourceNamespace, "cluster-resource-namespace", o.IssuerOptions.ClusterResourceNamespace,
+		"Namespace to store resources owned by cluster-scoped resources such as ClusterIssuer in. "+
+			"Defaults to the namespace the controller is running in.")
+
+	fs.BoolVar(&o.IssuerOptions.IssuerAmbientCredentials, "issuer-ambient-credentials", o.IssuerOptions.IssuerAmbientCredentials,
+		"Whether an Issuer may make use of ambient credentials. 'Ambient Credentials' are credentials drawn "+
+			"from the environment, metadata services, or local files which are not explicitly configured in "+
+			"the Issuer API object. When this flag is enabled, the following sources for credentials are also "+
+			"used: AWS - All sources the Go SDK defaults to, notably including any EC2 IAM roles available via "+
+			"instance metadata.")
+
+	fs.BoolVar(&o.IssuerOptions.ClusterIssuerAmbientCredentials, "cluster-issuer-ambient-credentials", o.IssuerOptions.ClusterIssuerAmbientCredentials,
+		"Whether a ClusterIssuer may make use of ambient credentials. See --issuer-ambient-credentials.")
+
+	fs.DurationVar(&o.IssuerOptions.MaxRetryDuration, "max-retry-duration", o.IssuerOptions.MaxRetryDuration,
+		"The maximum amount of time, measured from its creation, that a CertificateRequest is retried "+
+			"after a transient signing error.")
+}
+
+func (o *Options) addLoggingFlags(fs *pflag.FlagSet) {
+	fs.Var(&o.log.format,
+		"log-format",
+		"Log format (text or json)")
+
+	fs.IntVarP(&o.log.level,
+		"log-level", "v", 1,
+		"Log level (1-5).")
+}

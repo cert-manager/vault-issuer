@@ -12,6 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include make/generate-rbac.mk
-include make/test-unit.mk
-include make/test-e2e.mk
+################
+# Check Inputs #
+################
+
+ifndef go_header_file
+$(error go_header_file is not set)
+endif
+
+################
+# Add targets #
+################
+
+.PHONY: generate-deepcopy
+## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+## @category [shared] Generate/ Verify
+generate-deepcopy: | $(NEEDS_CONTROLLER-GEN)
+	$(eval directories := $(shell ls -d */ | grep -v '_bin' | grep -v 'make'))
+	$(CONTROLLER-GEN) object:headerFile=$(go_header_file) $(directories:%=paths=./%...)
+
+shared_generate_targets += generate-deepcopy

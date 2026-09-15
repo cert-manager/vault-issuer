@@ -6,6 +6,21 @@ linters:
     presets: [comments, common-false-positives, legacy, std-error-handling]
     paths: [third_party, builtin$, examples$]
     warn-unused: true
+    rules:
+      # The end-to-end helpers are vendored from cert-manager's test framework.
+      # These identifiers name Secrets, they do not hold credentials.
+      - path: test/e2e/
+        linters: [gosec]
+        text: "G101"
+      # Copied verbatim from cert-manager, so that it can be re-synced with a
+      # plain diff. The switch covers the algorithms cert-manager issues for.
+      - path: test/e2e/framework/helper/certificaterequests.go
+        linters: [exhaustive]
+      # Test fixtures and condition messages name Secrets, they do not hold
+      # credentials.
+      - path: (internal/controller/check\.go|_test\.go)
+        linters: [gosec]
+        text: "G101"
   settings:
     staticcheck:
       checks: ["all", "-ST1000", "-ST1001", "-ST1003", "-ST1005", "-ST1012", "-ST1016", "-ST1020", "-ST1021", "-ST1022", "-QF1001", "-QF1003", "-QF1008"]

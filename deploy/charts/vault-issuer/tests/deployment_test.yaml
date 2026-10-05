@@ -1,0 +1,66 @@
+suite: controller deployment
+templates:
+  - deployment.yaml
+tests:
+  - it: passes the cluster resource namespace, defaulting to the release namespace
+    release:
+      name: vault-issuer
+      namespace: cert-manager
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --cluster-resource-namespace=cert-manager
+
+  - it: prefers an explicit cluster resource namespace over the release namespace
+    release:
+      namespace: cert-manager
+    set:
+      app.issuer.clusterResourceNamespace: kube-system
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --cluster-resource-namespace=kube-system
+
+  - it: keeps ambient credentials off for namespaced Issuers by default
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --issuer-ambient-credentials=false
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --cluster-issuer-ambient-credentials=true
+
+  - it: builds the image from registry, namespace and name by default
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: quay.io/jetstack/vault-issuer:v0.0.0
+
+  - it: lets image.repository override the constructed reference
+    set:
+      image.repository: cert-manager.local/vault-issuer
+      image.tag: v0.1.0
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: cert-manager.local/vault-issuer:v0.1.0
+
+  - it: prefers the image digest over the tag
+    set:
+      image.repository: quay.io/jetstack/vault-issuer
+      image.digest: sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: quay.io/jetstack/vault-issuer@sha256:0e072dddd1f7f8fc8909a2ca6f65e76c5f0d2fcfb8be47935ae3457e8bbceb20
+
+  - it: exposes the metrics port and passes it to the controller
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --metrics-port=9402
+      - contains:
+          path: spec.template.spec.containers[0].ports
+          content:
+            containerPort: 9402
+            name: metrics

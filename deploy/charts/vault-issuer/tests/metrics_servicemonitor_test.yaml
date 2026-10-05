@@ -1,0 +1,38 @@
+suite: metrics service and servicemonitor
+templates:
+  - metrics-service.yaml
+  - metrics-servicemonitor.yaml
+tests:
+  - it: creates a metrics Service by default, and no ServiceMonitor
+    template: metrics-service.yaml
+    asserts:
+      - isKind:
+          of: Service
+      - equal:
+          path: spec.ports[0].port
+          value: 9402
+
+  - it: creates no ServiceMonitor by default
+    template: metrics-servicemonitor.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: creates a ServiceMonitor when enabled
+    template: metrics-servicemonitor.yaml
+    set:
+      app.metrics.service.servicemonitor.enabled: true
+    asserts:
+      - isKind:
+          of: ServiceMonitor
+      - equal:
+          path: spec.endpoints[0].targetPort
+          value: 9402
+
+  - it: creates neither when the metrics Service is disabled
+    set:
+      app.metrics.service.enabled: false
+      app.metrics.service.servicemonitor.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0

@@ -17,7 +17,7 @@
 ## @category Testing
 test-unit: | $(NEEDS_GOTESTSUM) $(ARTIFACTS)
 	$(GOTESTSUM) \
-		--junitfile=$(ARTIFACTS)/junit-go-e2e.xml \
+		--junitfile=$(ARTIFACTS)/junit-go-unit.xml \
 		-- \
 		-coverprofile=$(ARTIFACTS)/filtered.cov \
 		./... \

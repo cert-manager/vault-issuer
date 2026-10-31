@@ -301,8 +301,8 @@ The namespace Secrets referenced by a ClusterIssuer are read from.
   
 Namespaced Issuers always read their Secrets from their own namespace; this setting only applies to cluster-scoped Issuers, which have no namespace of their own.  
   
-This must equal the `clusterResourceNamespace` of the cert-manager installation vault-issuer is replacing (cert-manager defaults it to its own namespace), otherwise existing ClusterIssuers cannot find their Secrets and go NotReady.
-
+This must equal the `clusterResourceNamespace` of the cert-manager installation vault-issuer is replacing (cert-manager defaults it to its own namespace), otherwise existing ClusterIssuers cannot find their  
+Secrets and go NotReady.
 #### **app.issuer.ambientCredentials** ~ `bool`
 > Default value:
 > ```yaml

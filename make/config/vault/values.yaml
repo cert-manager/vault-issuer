@@ -1,0 +1,66 @@
+# Vault server used by the end-to-end tests.
+#
+# These settings mirror the ones cert-manager's e2e Vault addon applies. In
+# particular the server runs in dev mode via `server.extraArgs` rather than
+# `server.dev.enabled`, because enabling the chart's dev mode makes it ignore
+# `server.standalone.config`, and that config is where TLS is turned on.
+#
+# Nothing here is suitable outside a throwaway test cluster: the server is
+# in-memory, unsealed on start, and accepts a well-known root token.
+#
+# {{TLS_REQUIRE_CLIENT_CERT}} is replaced by the make target: false for the
+# default install, true for the mTLS-enforcing one.
+
+global:
+  tlsDisable: false
+
+injector:
+  enabled: false
+
+server:
+  image:
+    # The repository and tag are set by the make target, from the image the
+    # kind module preloaded into the cluster.
+    pullPolicy: Never
+
+  standalone:
+    enabled: true
+    config: |
+      listener "tcp" {
+        address = "[::]:8200"
+        cluster_address = "[::]:8201"
+        tls_disable = false
+        tls_client_ca_file = "/vault/tls/ca.crt"
+        tls_cert_file = "/vault/tls/server.crt"
+        tls_key_file = "/vault/tls/server.key"
+        tls_require_and_verify_client_cert = {{TLS_REQUIRE_CLIENT_CERT}}
+      }
+
+  # Dev mode keeps everything in memory and unseals on start. The separate
+  # dev listener stays on 8202 so it does not collide with the TLS listener
+  # configured above.
+  extraArgs: "-dev-tls -dev-listen-address=[::]:8202"
+
+  extraEnvironmentVars:
+    VAULT_DEV_ROOT_TOKEN_ID: vault-root-token
+    # The chart's readiness and liveness probes exec `vault status`, which needs
+    # a client certificate once the listener requires one.
+    VAULT_CLIENT_CERT: /vault/tls/client.crt
+    VAULT_CLIENT_KEY: /vault/tls/client.key
+
+  volumes:
+    - name: vault-tls
+      secret:
+        secretName: vault-tls
+
+  volumeMounts:
+    - name: vault-tls
+      mountPath: /vault/tls
+
+  dataStorage:
+    enabled: false
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi

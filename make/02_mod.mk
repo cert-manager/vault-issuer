@@ -15,3 +15,13 @@
 include make/generate-rbac.mk
 include make/test-unit.mk
 include make/test-e2e.mk
+
+.PHONY: release
+release:
+	$(MAKE) oci-push-controller
+	$(MAKE) helm-chart-oci-push
+	@echo "RELEASE_OCI_CONTROLLER_IMAGE=$(oci_controller_image_name)" >> "$(GITHUB_OUTPUT)"
+	@echo "RELEASE_OCI_CONTROLLER_TAG=$(oci_controller_image_tag)" >> "$(GITHUB_OUTPUT)"
+	@echo "RELEASE_HELM_CHART_IMAGE=$(helm_chart_image_name)" >> "$(GITHUB_OUTPUT)"
+	@echo "RELEASE_HELM_CHART_VERSION=$(helm_chart_version)" >> "$(GITHUB_OUTPUT)"
+	@echo "Release complete!"

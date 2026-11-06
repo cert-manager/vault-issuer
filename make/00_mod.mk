@@ -33,6 +33,7 @@ go_controller_ldflags := -X main.Version=$(VERSION)
 oci_controller_base_image_flavor := static
 oci_controller_image_tag := $(VERSION)
 oci_controller_image_name_development := cert-manager.local/vault-issuer
+oci_controller_image_name := quay.io/jetstack/vault-issuer
 
 deploy_name := vault-issuer
 deploy_namespace := cert-manager

@@ -55,6 +55,11 @@ targets:
       repo_ref: main
       repo_hash: f0372c44934d205a052305335590f8320af968f6
       repo_path: modules/oci-build
+    - folder_name: oci-publish
+      repo_url: https://github.com/cert-manager/makefile-modules.git
+      repo_ref: main
+      repo_hash: f0372c44934d205a052305335590f8320af968f6
+      repo_path: modules/oci-publish
     - folder_name: repository-base
       repo_url: https://github.com/cert-manager/makefile-modules.git
       repo_ref: main

@@ -51,6 +51,7 @@ const FieldOwner = "vault.cert-manager.io"
 // to events.k8s.io/v1 rather than the legacy core API.
 // +kubebuilder:rbac:groups=events.k8s.io,resources=events,verbs=create;patch
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;create;update
+// +kubebuilder:rbac:groups=authorization.k8s.io,resources=subjectaccessreviews,verbs=create
 
 // Signer implements the issuer-lib Check and Sign functions for Vault-backed
 // cert-manager Issuers and ClusterIssuers.
@@ -103,6 +104,8 @@ func (s *Signer) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
 		// status.ca, so leaving this off would silently empty ca.crt in every
 		// Secret on the next renewal.
 		SetCAOnCertificateRequest: true,
+
+		EnableNamespacedIssuerCSR: true,
 
 		EventRecorder: mgr.GetEventRecorder(FieldOwner),
 

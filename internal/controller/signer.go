@@ -20,9 +20,14 @@ import (
 	"context"
 	"fmt"
 
+	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/cert-manager/issuer-lib/api/v1alpha1"
 	"github.com/cert-manager/issuer-lib/controllers"
+	"github.com/cert-manager/issuer-lib/controllers/signer"
 	"github.com/cert-manager/issuer-lib/intree"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -58,6 +63,7 @@ const FieldOwner = "vault.cert-manager.io"
 type Signer struct {
 	Options
 	Reader             client.Reader
+	client             client.Client
 	createTokenFn      func(ns string) vaultinternal.CreateToken
 	vaultClientBuilder vaultinternal.ClientBuilder
 }
@@ -83,6 +89,7 @@ func (s *Signer) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
 	}
 
 	s.Reader = mgr.GetAPIReader()
+	s.client = mgr.GetClient()
 
 	return (&controllers.CombinedController{
 		IssuerTypes:        intree.Issuers,
@@ -97,6 +104,8 @@ func (s *Signer) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
 		// cert-manager's Issuer CRD is shared with every other in-tree issuer
 		// type, so anything without a .spec.vault belongs to someone else.
 		IgnoreIssuer: s.IgnoreIssuer,
+
+		IgnoreCertificateRequest: s.IgnoreCertificateRequest,
 
 		// Preserves the in-tree behaviour of populating the CertificateRequest's
 		// status.ca (and therefore the Secret's ca.crt).
@@ -126,4 +135,40 @@ func (s *Signer) IgnoreIssuer(ctx context.Context, issuerObject v1alpha1.Issuer)
 	}
 
 	return iss.IssuerSpec().Vault == nil, nil
+}
+
+// IgnoreCertificateRequest implements signer.IgnoreCertificateRequest. It is the
+// request-side counterpart of IgnoreIssuer.
+func (s *Signer) IgnoreCertificateRequest(ctx context.Context,
+	cr signer.CertificateRequestObject,
+	issuerGvk schema.GroupVersionKind,
+	issuerName types.NamespacedName) (bool, error) {
+
+	var spec *cmapi.IssuerSpec
+
+	switch issuerGvk.Kind {
+	case cmapi.IssuerKind:
+		var iss cmapi.Issuer
+		if err := s.client.Get(ctx, issuerName, &iss); err != nil {
+			return ignoreIfNotFound(err)
+		}
+		spec = &iss.Spec
+	case cmapi.ClusterIssuerKind:
+		var iss cmapi.ClusterIssuer
+		if err := s.client.Get(ctx, types.NamespacedName{Name: issuerName.Name}, &iss); err != nil {
+			return ignoreIfNotFound(err)
+		}
+		spec = &iss.Spec
+	default:
+		return false, fmt.Errorf("unexpected issuer kind %q for CertificateRequest", issuerGvk.Kind)
+	}
+
+	return spec.Vault == nil, nil
+}
+
+func ignoreIfNotFound(err error) (bool, error) {
+	if apierrors.IsNotFound(err) {
+		return true, nil
+	}
+	return false, err
 }
